@@ -1,7 +1,9 @@
 __author__ = 'thecomet'
 
-import pygame
 import time
+
+import pygame
+
 from DraggableCircle import DraggableCircle
 from Updateable import Updateable
 

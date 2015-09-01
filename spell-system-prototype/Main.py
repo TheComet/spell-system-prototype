@@ -1,9 +1,10 @@
 __author__ = 'thecomet'
 
 import sys
-import pygame
-from Window import Window
 
+import pygame
+
+from Window import Window
 
 if __name__ == '__main__':
     pygame.init()

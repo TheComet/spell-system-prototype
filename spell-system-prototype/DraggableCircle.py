@@ -1,6 +1,7 @@
 __author__ = 'thecomet'
 
 import pygame
+
 from Updateable import Updateable
 
 
