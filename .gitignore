@@ -1,2 +1,7 @@
-/.idea
+# IDE generated
+.idea
 __pycache__
+
+# compiled python
+*.pyc
+
