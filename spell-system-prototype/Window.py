@@ -2,8 +2,8 @@ __author__ = 'thecomet'
 
 import time
 import pygame
-from Spell import Spell
 from Updateable import Updateable
+from SpellCraftingManager import SpellCraftingManager
 
 
 class Window(Updateable):
@@ -15,7 +15,7 @@ class Window(Updateable):
         self.updateable_items = list()
         self.updateable_items.append(self)
 
-        self.updateable_items.append(Spell("Test", (400, 300)))
+        self.updateable_items.append(SpellCraftingManager())
 
         self.__last_time_updated = None
         self.__running = None
