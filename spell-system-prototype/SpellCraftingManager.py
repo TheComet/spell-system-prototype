@@ -2,6 +2,7 @@ __author__ = 'thecomet'
 
 from Updateable import Updateable
 from Spell import Spell
+import pygame
 
 
 class SpellCraftingManager(Updateable, Spell.Listener):
@@ -29,7 +30,7 @@ class SpellCraftingManager(Updateable, Spell.Listener):
         self.updateable_items.append(new_spell)
 
     def on_spell_released(self, spell):
-        print('spell "{}" was released'.format(spell.label.text))
+        pass
 
     def process_event(self, event):
         for item in self.updateable_items:
@@ -62,13 +63,14 @@ class SpellCraftingManager(Updateable, Spell.Listener):
     @staticmethod
     def __move_spells_apart(spell, other_spell, time_step):
         # normalised direction vector
-        direction_vec = (spell.position[0] - other_spell.position[0], spell.position[1] - other_spell.position[1])
-        hypothenuse = (direction_vec[0]**2 + direction_vec[1]**2)**0.5
-        direction_vec = (direction_vec[0] / hypothenuse, direction_vec[1] / hypothenuse)
+        direction = (spell.position[0] - other_spell.position[0], spell.position[1] - other_spell.position[1])
+        hypothenuse = (direction[0]**2 + direction[1]**2)**0.5
+        direction = (direction[0] / hypothenuse, direction[1] / hypothenuse)
 
-        speed = time_step * 30
-        spell.position = (spell.position[0] + direction_vec[0] * speed,
-                          spell.position[1] + direction_vec[1] * speed)
+        # push spells apart - don't modify the position of spells that are still being dragged
+        speed = time_step * 50
+        spell.position = (spell.position[0] + direction[0] * speed,
+                          spell.position[1] + direction[1] * speed)
         if not other_spell.is_dragging:
-            other_spell.position = (other_spell.position[0] - direction_vec[0] * speed,
-                                    other_spell.position[1] - direction_vec[1] * speed)
+            other_spell.position = (other_spell.position[0] - direction[0] * speed,
+                                    other_spell.position[1] - direction[1] * speed)

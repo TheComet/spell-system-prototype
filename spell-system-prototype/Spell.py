@@ -2,6 +2,7 @@ __author__ = 'thecomet'
 
 from DraggableCircle import DraggableCircle
 from SpellLabel import SpellLabel
+import pygame
 
 
 class Spell(DraggableCircle):
@@ -28,7 +29,14 @@ class Spell(DraggableCircle):
 
     def update(self, time_step):
         super(Spell, self).update(time_step)
+        self.__keep_spell_on_screen()
 
     def draw(self, surface):
         super(Spell, self).draw(surface)
         self.label.draw(surface)
+
+    def __keep_spell_on_screen(self):
+        info = pygame.display.Info()
+        width, height = info.current_w, info.current_h
+        self.position = (min(max(self.position[0], self.radius), width - self.radius),
+                         min(max(self.position[1], self.radius), height - self.radius))
