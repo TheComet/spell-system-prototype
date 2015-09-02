@@ -40,9 +40,11 @@ class DraggableCircle(Updateable):
             self.__set_dragging(False)
 
     def update(self, time_step):
-        target_radius = self.__radius * 1.3 if self.__is_dragging else self.__radius
-        diff = target_radius - self.__actual_radius
-        self.__actual_radius += diff * time_step * 40
+        factor = 1.3
+        target_radius = self.__radius * factor if self.__is_dragging else self.__radius
+        max_diff = (target_radius - self.__actual_radius)
+        diff = max_diff * time_step * 40
+        self.__actual_radius += min(diff, max_diff) if diff > 0 else max(diff, max_diff)
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, tuple(map(int, self.position)), int(self.__actual_radius), 1)

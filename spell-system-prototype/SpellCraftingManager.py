@@ -65,12 +65,16 @@ class SpellCraftingManager(Updateable, Spell.Listener):
         # normalised direction vector
         direction = (spell.position[0] - other_spell.position[0], spell.position[1] - other_spell.position[1])
         hypothenuse = (direction[0]**2 + direction[1]**2)**0.5
-        direction = (direction[0] / hypothenuse, direction[1] / hypothenuse)
+        if hypothenuse > 0:
+            direction = (direction[0] / hypothenuse, direction[1] / hypothenuse)
+        else:
+            direction = (0, 0)
 
         # push spells apart - don't modify the position of spells that are still being dragged
         speed = time_step * 50
-        spell.position = (spell.position[0] + direction[0] * speed,
-                          spell.position[1] + direction[1] * speed)
+        if not spell.is_dragging:
+            spell.position = (spell.position[0] + direction[0] * speed,
+                              spell.position[1] + direction[1] * speed)
         if not other_spell.is_dragging:
             other_spell.position = (other_spell.position[0] - direction[0] * speed,
                                     other_spell.position[1] - direction[1] * speed)
