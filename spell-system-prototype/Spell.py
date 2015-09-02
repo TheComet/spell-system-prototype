@@ -1,32 +1,34 @@
 __author__ = 'thecomet'
 
-from Updateable import Updateable
 from DraggableCircle import DraggableCircle
 from SpellLabel import SpellLabel
 
 
-class Spell(Updateable):
+class Spell(DraggableCircle):
+
+    class Listener(DraggableCircle.Listener):
+        def on_draggable_circle_clicked(self, draggable_circle):
+            self.on_spell_clicked(draggable_circle)
+
+        def on_draggable_circle_released(self, draggable_circle):
+            self.on_spell_released(draggable_circle)
+
+        def on_spell_clicked(self, spell):
+            pass
+
+        def on_spell_released(self, spell):
+            pass
 
     def __init__(self, name, position):
-        self.circle = DraggableCircle((255, 255, 255), position, 20)
+        super(Spell, self).__init__((255, 255, 255), position, 20)
         self.label = SpellLabel(self, name)
 
-        self.circle.set_on_drag_listener(self.__on_circle_dragged)
-        self.__drag_listener = None
-
     def process_event(self, event):
-        self.circle.process_event(event)
+        super(Spell, self).process_event(event)
 
     def update(self, time_step):
-        self.circle.update(time_step)
+        super(Spell, self).update(time_step)
 
     def draw(self, surface):
-        self.circle.draw(surface)
+        super(Spell, self).draw(surface)
         self.label.draw(surface)
-
-    def __on_circle_dragged(self):
-        if self.__drag_listener:
-            self.__drag_listener(self)
-
-    def set_on_drag_listener(self, listener):
-        self.__drag_listener = listener

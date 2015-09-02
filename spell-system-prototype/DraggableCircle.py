@@ -6,26 +6,37 @@ from Updateable import Updateable
 
 class DraggableCircle(Updateable):
 
+    class Listener(object):
+        def on_draggable_circle_clicked(self, draggable_circle):
+            pass
+
+        def on_draggable_circle_released(self, draggable_circle):
+            pass
+
     def __init__(self, color, position, radius):
         self.color = color
         self.position = position
-        self.__radius = radius
+        self.listeners = list()
 
+        self.__radius = radius
         self.__actual_radius = radius
+        self.__dragging_enabled = True
         self.__is_dragging = False
         self.__cursor_grab_offset = None
-        self.__on_drag_listener = None
 
     def process_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.__cursor_grab_offset = (self.position[0] - event.pos[0], self.position[1] - event.pos[1])
             if self.__cursor_grab_offset[0]**2 + self.__cursor_grab_offset[1]**2 <= self.__radius**2:
                 self.__set_dragging(True)
+                self.__notify_clicked()
 
         if event.type == pygame.MOUSEMOTION and self.__is_dragging:
             self.position = (event.pos[0] + self.__cursor_grab_offset[0], event.pos[1] + self.__cursor_grab_offset[1])
 
         if event.type == pygame.MOUSEBUTTONUP:
+            if self.__is_dragging:
+                self.__notify_released()
             self.__set_dragging(False)
 
     def update(self, time_step):
@@ -34,7 +45,7 @@ class DraggableCircle(Updateable):
         self.__actual_radius += diff * time_step * 40
 
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color, self.position, int(self.__actual_radius), 1)
+        pygame.draw.circle(surface, self.color, tuple(map(int, self.position)), int(self.__actual_radius), 1)
 
     @property
     def radius(self):
@@ -44,10 +55,27 @@ class DraggableCircle(Updateable):
     def radius(self, radius):
         self.__radius = radius
 
-    def set_on_drag_listener(self, listener):
-        self.__on_drag_listener = listener
+    @property
+    def dragging_enabled(self):
+        return self.__dragging_enabled
+
+    @dragging_enabled.setter
+    def dragging_enabled(self, enable):
+        self.__dragging_enabled = enable
+        self.__is_dragging = False
+
+    @property
+    def is_dragging(self):
+        return self.__is_dragging
 
     def __set_dragging(self, enable):
-        self.__is_dragging = enable
-        if enable and self.__on_drag_listener:
-            self.__on_drag_listener()
+        if self.__dragging_enabled:
+            self.__is_dragging = enable
+
+    def __notify_clicked(self):
+        for item in self.listeners:
+            item.on_draggable_circle_clicked(self)
+
+    def __notify_released(self):
+        for item in self.listeners:
+            item.on_draggable_circle_released(self)

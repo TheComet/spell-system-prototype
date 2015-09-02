@@ -30,5 +30,5 @@ class SpellLabel(Updateable):
         surface.blit(self.__label, self.__get_label_position())
 
     def __get_label_position(self):
-        return (self.__spell.circle.position[0] + self.__label_offset[0],
-                self.__spell.circle.position[1] + self.__label_offset[1] - self.__spell.circle.radius)
+        return (self.__spell.position[0] + self.__label_offset[0],
+                self.__spell.position[1] + self.__label_offset[1] - self.__spell.radius)
