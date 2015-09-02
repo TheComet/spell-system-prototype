@@ -20,7 +20,7 @@ class DraggableCircle(Updateable):
 
         self.__radius = radius
         self.__actual_radius = radius
-        self.__dragging_enabled = True
+        self.__is_draggable = True
         self.__is_dragging = False
         self.__cursor_grab_offset = None
 
@@ -58,12 +58,12 @@ class DraggableCircle(Updateable):
         self.__radius = radius
 
     @property
-    def dragging_enabled(self):
-        return self.__dragging_enabled
+    def is_draggable(self):
+        return self.__is_draggable
 
-    @dragging_enabled.setter
-    def dragging_enabled(self, enable):
-        self.__dragging_enabled = enable
+    @is_draggable.setter
+    def is_draggable(self, enable):
+        self.__is_draggable = enable
         self.__is_dragging = False
 
     @property
@@ -71,7 +71,7 @@ class DraggableCircle(Updateable):
         return self.__is_dragging
 
     def __set_dragging(self, enable):
-        if self.__dragging_enabled:
+        if self.__is_draggable:
             self.__is_dragging = enable
 
     def __notify_clicked(self):

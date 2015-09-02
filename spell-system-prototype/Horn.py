@@ -7,8 +7,8 @@ import pygame
 class Horn(SpellBase):
 
     def __init__(self, position):
-        super(Horn, self).__init__("Horn", position)
-        self.dragging_enabled = False
+        super(Horn, self).__init__("Horn", (200, 255, 255), position)
+        self.is_draggable = False
 
     def draw(self, surface):
         super(Horn, self).draw(surface)

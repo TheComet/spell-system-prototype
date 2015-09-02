@@ -2,6 +2,7 @@ __author__ = 'thecomet'
 
 from Updateable import Updateable
 from SpellBase import SpellBase
+from SpellLumen import SpellLumen
 from Horn import Horn
 
 
@@ -14,21 +15,23 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
         self.horn = Horn((70, 300))
         self.updateable_items.append(self.horn)
 
-        self.create_spell_template("Spell", (400, 300))
+        self.create_all_spell_templates()
 
-    def create_spell_template(self, name, position):
-        template = SpellBase(name, position)
-        template.dragging_enabled = False
-        template.listeners.append(self)
-        self.updateable_items.append(template)
+    def create_all_spell_templates(self):
+        self.add_spell_as_template(SpellLumen((50, 550)))
+
+    def add_spell_as_template(self, spell):
+        spell.is_draggable = False
+        spell.is_template = True
+        spell.listeners.append(self)
+        self.updateable_items.append(spell)
 
     def on_spell_clicked(self, spell):
-        # if the spell is a template (i.e. it doesn't have dragging enabled), create a new, draggable clone
-        if not spell.dragging_enabled:
+        if spell.is_template:
             self.create_new_spell_from_template(spell)
 
     def create_new_spell_from_template(self, template):
-        new_spell = SpellBase(template.label.text, template.position)
+        new_spell = template.clone()
         new_spell.listeners.append(self)
         self.spells.append(new_spell)
         self.updateable_items.append(new_spell)

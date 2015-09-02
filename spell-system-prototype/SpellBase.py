@@ -20,9 +20,11 @@ class SpellBase(DraggableCircle):
         def on_spell_released(self, spell):
             pass
 
-    def __init__(self, name, position):
-        super(SpellBase, self).__init__((255, 255, 255), position, 20)
+    def __init__(self, name, color, position):
+        super(SpellBase, self).__init__(color, position, 20)
         self.label = SpellLabel(self, name)
+
+        self.is_template = False
 
     def process_event(self, event):
         super(SpellBase, self).process_event(event)
@@ -34,6 +36,9 @@ class SpellBase(DraggableCircle):
     def draw(self, surface):
         super(SpellBase, self).draw(surface)
         self.label.draw(surface)
+
+    def clone(self):
+        raise NotImplementedError('Spells must implement this method')
 
     def __keep_spell_on_screen(self):
         info = pygame.display.Info()
