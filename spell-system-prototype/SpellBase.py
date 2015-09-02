@@ -5,7 +5,7 @@ from SpellLabel import SpellLabel
 import pygame
 
 
-class Spell(DraggableCircle):
+class SpellBase(DraggableCircle):
 
     class Listener(DraggableCircle.Listener):
         def on_draggable_circle_clicked(self, draggable_circle):
@@ -21,18 +21,18 @@ class Spell(DraggableCircle):
             pass
 
     def __init__(self, name, position):
-        super(Spell, self).__init__((255, 255, 255), position, 20)
+        super(SpellBase, self).__init__((255, 255, 255), position, 20)
         self.label = SpellLabel(self, name)
 
     def process_event(self, event):
-        super(Spell, self).process_event(event)
+        super(SpellBase, self).process_event(event)
 
     def update(self, time_step):
-        super(Spell, self).update(time_step)
+        super(SpellBase, self).update(time_step)
         self.__keep_spell_on_screen()
 
     def draw(self, surface):
-        super(Spell, self).draw(surface)
+        super(SpellBase, self).draw(surface)
         self.label.draw(surface)
 
     def __keep_spell_on_screen(self):

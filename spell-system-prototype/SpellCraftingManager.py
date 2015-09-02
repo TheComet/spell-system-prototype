@@ -1,19 +1,23 @@
 __author__ = 'thecomet'
 
 from Updateable import Updateable
-from Spell import Spell
-import pygame
+from SpellBase import SpellBase
+from Horn import Horn
 
 
-class SpellCraftingManager(Updateable, Spell.Listener):
+class SpellCraftingManager(Updateable, SpellBase.Listener):
 
     def __init__(self):
         self.updateable_items = list()
         self.spells = list()
+
+        self.horn = Horn((70, 300))
+        self.updateable_items.append(self.horn)
+
         self.create_spell_template("Spell", (400, 300))
 
     def create_spell_template(self, name, position):
-        template = Spell(name, position)
+        template = SpellBase(name, position)
         template.dragging_enabled = False
         template.listeners.append(self)
         self.updateable_items.append(template)
@@ -24,7 +28,7 @@ class SpellCraftingManager(Updateable, Spell.Listener):
             self.create_new_spell_from_template(spell)
 
     def create_new_spell_from_template(self, template):
-        new_spell = Spell(template.label.text, template.position)
+        new_spell = SpellBase(template.label.text, template.position)
         new_spell.listeners.append(self)
         self.spells.append(new_spell)
         self.updateable_items.append(new_spell)
@@ -68,7 +72,7 @@ class SpellCraftingManager(Updateable, Spell.Listener):
         if hypothenuse > 0:
             direction = (direction[0] / hypothenuse, direction[1] / hypothenuse)
         else:
-            direction = (0, 0)
+            direction = (0, 1)
 
         # push spells apart - don't modify the position of spells that are still being dragged
         speed = time_step * 50
