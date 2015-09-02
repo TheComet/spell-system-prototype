@@ -11,7 +11,12 @@ class SpellCraftingManager(Updateable):
         self.create_spell_template("Spell", (400, 300))
 
     def create_spell_template(self, name, position):
-        self.updatable_items.append(Spell(name, position))
+        template = Spell(name, position)
+        template.set_on_drag_listener(self.__on_template_spell_dragged)
+        self.updatable_items.append(template)
+
+    def __on_template_spell_dragged(self, spell):
+        pass
 
     def process_event(self, event):
         for item in self.updatable_items:

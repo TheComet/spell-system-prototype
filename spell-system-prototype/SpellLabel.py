@@ -20,6 +20,7 @@ class SpellLabel(Updateable):
 
     @text.setter
     def text(self, text):
+        self.__text = text
         font = pygame.font.SysFont('monospace', 12)
         font_size = font.size(text)
         self.__label = font.render(text, 1, (255, 255, 255))
