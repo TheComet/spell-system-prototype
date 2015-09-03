@@ -14,7 +14,7 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
         self.spells = list()
         self.horn = None
 
-        self.__floating_spell = None
+        self.__floating_spells = list()
 
         self.__create_horn()
         self.__create_all_spell_templates()
@@ -41,15 +41,25 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
         self.updateable_items.append(new_spell)
         return new_spell
 
+    def destroy_spell(self, spell):
+        self.spells.remove(spell)
+        self.updateable_items.remove(spell)
+        del spell
+
     def on_spell_clicked(self, spell):
         if spell.is_template:
-            self.__floating_spell = self.create_new_spell_from_template(spell)
+            self.__floating_spells.append(self.create_new_spell_from_template(spell))
         else:
-            self.__floating_spell = spell
+            self.__floating_spells.append(spell)
 
     def on_spell_released(self, spell):
-        if self.__floating_spell:
-            self.__floating_spell = None
+        self.__floating_spells.remove(spell)
+        self.__remove_dead_spells()
+
+    def __remove_dead_spells(self):
+        for spell in [x for x in self.spells]:
+            if not self.horn.is_linked_to(spell):
+                self.destroy_spell(spell)
 
     def process_event(self, event):
         for item in self.updateable_items:
@@ -72,36 +82,37 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
                     self.__move_spells_apart(spell, other_spell, time_step)
 
     def __handle_floating_spell_links(self):
-        if not self.__floating_spell:
+        if len(self.__floating_spells) == 0:
             return
 
-        self.__floating_spell.unlink_local()
-        self.__handle_floating_spell_links_in(150)
-        self.__handle_floating_spell_links_out(150)
+        for spell in self.__floating_spells:
+            spell.unlink_local()
+            self.__handle_floating_spell_links_in(spell, 150)
+            self.__handle_floating_spell_links_out(spell, 150)
 
-    def __handle_floating_spell_links_in(self, max_link_range):
-        free_link_slots = self.__floating_spell.free_link_slots_in
+    def __handle_floating_spell_links_in(self, spell, max_link_range):
+        free_link_slots = spell.free_link_slots_in
         # create a list of key-value pairs as tuples. key=distance, value=spell object
-        distance_spell_pairs = ((self.__floating_spell.distance_to_squared(x), x)
-                                for x in self.spells if x is not self.__floating_spell
-                                and x.position[0] < self.__floating_spell.position[0])
+        distance_spell_pairs = [(spell.distance_to_squared(x), x)
+                                for x in self.spells if x is not spell
+                                and x.position[0] < spell.position[0]]
         candidates = sorted(x for x in distance_spell_pairs
                             if x[0] < max_link_range**2 and x[1].free_link_slots_out > 0)[:free_link_slots]
 
-        for distance, spell in candidates:
-            self.__floating_spell.link_input_to(spell)
+        for distance, other_spell in candidates:
+            spell.link_input_to(other_spell)
 
-    def __handle_floating_spell_links_out(self, max_link_range):
-        free_link_slots = self.__floating_spell.free_link_slots_out
+    def __handle_floating_spell_links_out(self, spell, max_link_range):
+        free_link_slots = spell.free_link_slots_out
         # create a list of key-value pairs as tuples. key=distance, value=spell object
-        distance_spell_pairs = ((self.__floating_spell.distance_to_squared(x), x)
-                                for x in self.spells if x is not self.__floating_spell
-                                and x.position[0] > self.__floating_spell.position[0])
+        distance_spell_pairs = ((spell.distance_to_squared(x), x)
+                                for x in self.spells if x is not spell
+                                and x.position[0] > spell.position[0])
         candidates = sorted(x for x in distance_spell_pairs
                             if x[0] < max_link_range**2 and x[1].free_link_slots_in > 0)[:free_link_slots]
 
-        for distance, spell in candidates:
-            self.__floating_spell.link_output_to(spell)
+        for distance, other_spell in candidates:
+            spell.link_output_to(other_spell)
 
     @staticmethod
     def __spells_are_colliding(spell, other_spell):

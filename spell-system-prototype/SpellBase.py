@@ -86,6 +86,25 @@ class SpellBase(DraggableCircle):
             linked.unlink_chain()
         self._links_in = list()
 
+    def is_linked_to(self, other_spell):
+        return self.is_linked_to_outwards(other_spell) or self.is_linked_to_inwards(other_spell)
+
+    def is_linked_to_outwards(self, other_spell):
+        if self is other_spell:
+            return True
+        for linked in self._links_out:
+            if linked.is_linked_to_outwards(other_spell):
+                return True
+        return False
+
+    def is_linked_to_inwards(self, other_spell):
+        if self is other_spell:
+            return True
+        for linked in self._links_in:
+            if linked.is_linked_to_inwards(other_spell):
+                return True
+        return False
+
     @property
     def free_link_slots_in(self):
         return self.total_links_in - len(self._links_in)
