@@ -21,4 +21,4 @@ class SpellLumen(SpellBase):
 
     @property
     def total_links_out(self):
-        return 1
+        return 0

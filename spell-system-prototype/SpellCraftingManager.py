@@ -3,8 +3,8 @@ __author__ = 'thecomet'
 from Updateable import Updateable
 from SpellBase import SpellBase
 from SpellLumen import SpellLumen
+from SpellTemperatus import SpellTemperatus
 from Horn import Horn
-import heapq
 
 
 class SpellCraftingManager(Updateable, SpellBase.Listener):
@@ -26,6 +26,7 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
 
     def __create_all_spell_templates(self):
         self.add_spell_as_template(SpellLumen((50, 550)))
+        self.add_spell_as_template(SpellTemperatus((120, 550)))
 
     def add_spell_as_template(self, spell):
         spell.is_draggable = False
@@ -65,9 +66,8 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
             item.draw(surface)
 
     def __handle_collisions_between_spells(self, time_step):
-        candidates = [x for x in self.spells if not x.is_template and not x.is_dragging]
-        for n, spell in enumerate(candidates):
-            for other_spell in candidates[n + 1:]:
+        for n, spell in enumerate(self.spells):
+            for other_spell in self.spells[n + 1:]:
                 if self.__spells_are_colliding(spell, other_spell):
                     self.__move_spells_apart(spell, other_spell, time_step)
 
@@ -122,9 +122,9 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
 
         # push spells apart
         speed = time_step * 50
-        if spell.is_draggable:
+        if spell.is_draggable and not spell.is_template and not spell.is_dragging:
             spell.position = (spell.position[0] + direction[0] * speed,
                               spell.position[1] + direction[1] * speed)
-        if other_spell.is_draggable:
+        if other_spell.is_draggable and not other_spell.is_template and not other_spell.is_dragging:
             other_spell.position = (other_spell.position[0] - direction[0] * speed,
                                     other_spell.position[1] - direction[1] * speed)

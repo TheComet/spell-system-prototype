@@ -48,8 +48,8 @@ class SpellBase(DraggableCircle):
 
     def draw(self, surface):
         super(SpellBase, self).draw(surface)
-        self.label.draw(surface)
         self.__draw_spell_links(surface)
+        self.label.draw(surface)
 
     def __draw_spell_links(self, surface):
         for spell in self._links_out:
