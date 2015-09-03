@@ -49,13 +49,23 @@ class SpellBase(DraggableCircle):
     def draw(self, surface):
         super(SpellBase, self).draw(surface)
         self.label.draw(surface)
+        self.__draw_spell_links(surface)
+
+    def __draw_spell_links(self, surface):
+        for spell in self._links_out:
+            pygame.draw.line(surface, self.color, self.position, spell.position)
 
     def link_input_to(self, other_spell):
         if self.free_link_slots_in == 0 or other_spell.free_link_slots_out == 0:
             raise RuntimeError("Spells don't have any free link slots")
         self._links_in.append(other_spell)
         other_spell._links_out.append(self)
-        print('spell "{0}" linked with "{1}"'.format(self.name, other_spell.name))
+
+    def link_output_to(self, other_spell):
+        if self.free_link_slots_out == 0 or other_spell.free_link_slots_in == 0:
+            raise RuntimeError("Spells don't have any free link slots")
+        self._links_out.append(other_spell)
+        other_spell._links_in.append(self)
 
     def unlink_local(self):
         for linked in self._links_out:

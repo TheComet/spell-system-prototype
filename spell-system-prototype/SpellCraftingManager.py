@@ -43,6 +43,8 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
     def on_spell_clicked(self, spell):
         if spell.is_template:
             self.__floating_spell = self.create_new_spell_from_template(spell)
+        else:
+            self.__floating_spell = spell
 
     def on_spell_released(self, spell):
         if self.__floating_spell:
@@ -74,8 +76,10 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
             return
 
         self.__floating_spell.unlink_local()
+        self.__handle_floating_spell_links_in(150)
+        self.__handle_floating_spell_links_out(150)
 
-        max_link_range = 150
+    def __handle_floating_spell_links_in(self, max_link_range):
         free_link_slots = self.__floating_spell.free_link_slots_in
         # create a list of key-value pairs as tuples. key=distance, value=spell object
         distance_spell_pairs = ((self.__floating_spell.distance_to_squared(x), x)
@@ -86,6 +90,18 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
 
         for distance, spell in candidates:
             self.__floating_spell.link_input_to(spell)
+
+    def __handle_floating_spell_links_out(self, max_link_range):
+        free_link_slots = self.__floating_spell.free_link_slots_out
+        # create a list of key-value pairs as tuples. key=distance, value=spell object
+        distance_spell_pairs = ((self.__floating_spell.distance_to_squared(x), x)
+                                for x in self.spells if x is not self.__floating_spell
+                                and x.position[0] > self.__floating_spell.position[0])
+        candidates = sorted(x for x in distance_spell_pairs
+                            if x[0] < max_link_range**2 and x[1].free_link_slots_in > 0)[:free_link_slots]
+
+        for distance, spell in candidates:
+            self.__floating_spell.link_output_to(spell)
 
     @staticmethod
     def __spells_are_colliding(spell, other_spell):
