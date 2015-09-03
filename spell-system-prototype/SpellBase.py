@@ -50,6 +50,32 @@ class SpellBase(DraggableCircle):
         super(SpellBase, self).draw(surface)
         self.label.draw(surface)
 
+    def link_input_to(self, other_spell):
+        if self.free_link_slots_in == 0 or other_spell.free_link_slots_out == 0:
+            raise RuntimeError("Spells don't have any free link slots")
+        self._links_in.append(other_spell)
+        other_spell._links_out.append(self)
+        print('spell "{0}" linked with "{1}"'.format(self.name, other_spell.name))
+
+    def unlink_local(self):
+        for linked in self._links_out:
+            linked._links_in.remove(self)
+
+        for linked in self._links_in:
+            linked._links_out.remove(self)
+
+        self._links_out = list()
+        self._links_in = list()
+
+    def unlink_chain(self):
+        for linked in self._links_out:
+            linked.unlink_chain()
+        self._links_out = list()
+
+        for linked in self._links_in:
+            linked.unlink_chain()
+        self._links_in = list()
+
     @property
     def free_link_slots_in(self):
         return self.total_links_in - len(self._links_in)
