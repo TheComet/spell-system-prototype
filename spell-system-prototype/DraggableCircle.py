@@ -28,16 +28,22 @@ class DraggableCircle(Updateable):
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.__cursor_grab_offset = (self.position[0] - event.pos[0], self.position[1] - event.pos[1])
             if self.__cursor_grab_offset[0]**2 + self.__cursor_grab_offset[1]**2 <= self.__radius**2:
-                self.__set_dragging(True)
-                self.__notify_clicked()
+                self.grab()
 
         if event.type == pygame.MOUSEMOTION and self.__is_dragging:
             self.position = (event.pos[0] + self.__cursor_grab_offset[0], event.pos[1] + self.__cursor_grab_offset[1])
 
         if event.type == pygame.MOUSEBUTTONUP:
-            if self.__is_dragging:
-                self.__notify_released()
-            self.__set_dragging(False)
+            self.drop()
+
+    def grab(self):
+        self.__set_dragging(True)
+        self.__notify_clicked()
+
+    def drop(self):
+        if self.__is_dragging:
+            self.__notify_released()
+        self.__set_dragging(False)
 
     def update(self, time_step):
         factor = 1.3
