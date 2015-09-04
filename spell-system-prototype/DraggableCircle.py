@@ -47,7 +47,6 @@ class DraggableCircle(Updateable):
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, tuple(map(int, self.position)), int(self.__actual_radius), 1)
-        pygame.draw.circle(surface, (0, 0, 0), tuple(map(int, self.position)), int(self.__actual_radius) - 1)
 
     @property
     def radius(self):

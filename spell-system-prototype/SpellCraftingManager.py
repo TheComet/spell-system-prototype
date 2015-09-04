@@ -69,6 +69,7 @@ class SpellCraftingManager(Updateable):
         if event.type == Event.SPELLRELEASED:
             self.__handle_floating_spell_links()
             self.__notify_remove_dead_spells()
+            self.horn.update_power()
 
         if event.type == Event.REMOVEDEADSPELLS:
             self.__remove_dead_spells()

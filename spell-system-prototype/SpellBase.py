@@ -11,16 +11,17 @@ class SpellBase(DraggableCircle):
     def __init__(self, name, color, position):
         super(SpellBase, self).__init__(color, position, 20)
         self.__name = name
-        self.label = SpellLabel(self, name)
+        self.name_label = SpellLabel(self, name, (0, -self.radius*1.3))
+        self.efficiency_label = SpellLabel(self, '{}%'.format(int(self.efficiency*100)))
         self.is_template = False
         self.links_in = list()
         self.links_out = list()
 
-    def calculate_total_energy_requirement(self):
-        energy = self.calculate_local_energy_requirement()
-        for link in self.links_in:
-            energy += link.calculate_total_energy_requirement()
-        return energy
+    def calculate_total_power_requirement(self):
+        power = self.calculate_local_power_requirement()
+        for link in self.links_out:
+            power += link.calculate_total_power_requirement()
+        return power / self.efficiency
 
     def distance_to_squared(self, other_spell):
         dx = self.position[0] - other_spell.position[0]
@@ -42,7 +43,8 @@ class SpellBase(DraggableCircle):
     def draw(self, surface):
         super(SpellBase, self).draw(surface)
         self.__draw_spell_links(surface)
-        self.label.draw(surface)
+        self.name_label.draw(surface)
+        self.efficiency_label.draw(surface)
 
     def __draw_spell_links(self, surface):
         for spell in self.links_out:
@@ -132,7 +134,11 @@ class SpellBase(DraggableCircle):
     @name.setter
     def name(self, name):
         self.__name = name
-        self.label = SpellLabel(self, name)
+        self.name_label = SpellLabel(self, name)
+
+    @property
+    def is_activated(self):
+        return not self.is_template and not self.is_dragging
 
     def __keep_spell_on_screen(self):
         info = pygame.display.Info()
@@ -160,8 +166,8 @@ class SpellBase(DraggableCircle):
         # something like:
         # return MySpell(self.position)
 
-    def calculate_local_energy_requirement(self):
-        raise NotImplementedError('Spells must provide their energy requirement')
+    def calculate_local_power_requirement(self):
+        raise NotImplementedError('Spells must provide their power requirement in Watts')
 
     @property
     def total_links_in(self):
@@ -170,3 +176,11 @@ class SpellBase(DraggableCircle):
     @property
     def total_links_out(self):
         raise NotImplementedError('Spells must provide information on how many links they can handle as output')
+
+    @property
+    def efficiency(self):
+        raise NotImplementedError('Spells must provide an efficiency factor [0..1]')
+
+    @property
+    def heat_dissipation(self):
+        raise NotImplementedError('Spells must provide a heat dissipation factor [0..1]')

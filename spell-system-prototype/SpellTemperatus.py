@@ -9,6 +9,12 @@ class SpellTemperatus(SpellBase):
         self.color = (255, 40, 40)
         super(SpellTemperatus, self).__init__("Temperatus", self.color, position)
 
+    def create_instance(self):
+        return SpellTemperatus(self.position)
+
+    def calculate_local_power_requirement(self):
+        return 0
+
     @property
     def total_links_out(self):
         return 3
@@ -17,8 +23,10 @@ class SpellTemperatus(SpellBase):
     def total_links_in(self):
         return 1
 
-    def create_instance(self):
-        return SpellTemperatus(self.position)
+    @property
+    def efficiency(self):
+        return 0.5
 
-    def calculate_local_energy_requirement(self):
-        return 0
+    @property
+    def heat_dissipation(self):
+        return 0.0
