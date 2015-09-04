@@ -1,20 +1,19 @@
 __author__ = 'thecomet'
 
 from Updateable import Updateable
-from SpellBase import SpellBase
 from SpellLumen import SpellLumen
 from SpellTemperatus import SpellTemperatus
 from Horn import Horn
+import Event
+import pygame
 
 
-class SpellCraftingManager(Updateable, SpellBase.Listener):
+class SpellCraftingManager(Updateable):
 
     def __init__(self):
         self.updateable_items = list()
         self.spells = list()
         self.horn = None
-
-        self.__floating_spells = list()
 
         self.__create_horn()
         self.__create_all_spell_templates()
@@ -31,12 +30,10 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
     def add_spell_as_template(self, spell):
         spell.is_draggable = False
         spell.is_template = True
-        spell.listeners.append(self)
         self.updateable_items.append(spell)
 
     def create_new_spell_from_template(self, template):
         new_spell = template.create_instance()
-        new_spell.listeners.append(self)
         self.spells.append(new_spell)
         self.updateable_items.append(new_spell)
         return new_spell
@@ -44,20 +41,18 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
     def destroy_spell(self, spell):
         self.spells.remove(spell)
         self.updateable_items.remove(spell)
-        del spell
+        spell.unlink_chain()
 
-    def on_spell_clicked(self, spell):
+    def __on_spell_clicked(self, spell):
         if spell.is_template:
-            self.__floating_spells.append(self.create_new_spell_from_template(spell))
+            new_spell = self.create_new_spell_from_template(spell)
+            new_spell.grab()
         else:
-            self.__floating_spells.append(spell)
-
-    def on_spell_released(self, spell):
-        self.__floating_spells.remove(spell)
-        self.__remove_dead_spells()
+            for other_spell in spell.links_out:
+                other_spell.grab()
 
     def __remove_dead_spells(self):
-        for spell in [x for x in self.spells]:
+        for spell in [x for x in self.spells if x is not self.horn]:
             if not self.horn.is_linked_to(spell):
                 self.destroy_spell(spell)
 
@@ -65,11 +60,27 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
         for item in self.updateable_items:
             item.process_event(event)
 
+        if event.type == Event.SPELLCLICKED:
+            self.__on_spell_clicked(event.spell)
+
+        if event.type == pygame.MOUSEMOTION:
+            self.__handle_floating_spell_links()
+
+        if event.type == Event.SPELLRELEASED:
+            self.__handle_floating_spell_links()
+            self.__notify_remove_dead_spells()
+
+        if event.type == Event.REMOVEDEADSPELLS:
+            self.__remove_dead_spells()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                pass
+
     def update(self, time_step):
         for item in self.updateable_items:
             item.update(time_step)
         self.__handle_collisions_between_spells(time_step)
-        self.__handle_floating_spell_links()
 
     def draw(self, surface):
         for item in self.updateable_items:
@@ -82,37 +93,28 @@ class SpellCraftingManager(Updateable, SpellBase.Listener):
                     self.__move_spells_apart(spell, other_spell, time_step)
 
     def __handle_floating_spell_links(self):
-        if len(self.__floating_spells) == 0:
-            return
-
-        for spell in self.__floating_spells:
+        for spell in self.spells:
             spell.unlink_local()
-            self.__handle_floating_spell_links_in(spell, 150)
-            self.__handle_floating_spell_links_out(spell, 150)
+        self.__relink_all_spells(150)
 
-    def __handle_floating_spell_links_in(self, spell, max_link_range):
-        free_link_slots = spell.free_link_slots_in
-        # create a list of key-value pairs as tuples. key=distance, value=spell object
-        distance_spell_pairs = [(spell.distance_to_squared(x), x)
-                                for x in self.spells if x is not spell
-                                and x.position[0] < spell.position[0]]
-        candidates = sorted(x for x in distance_spell_pairs
-                            if x[0] < max_link_range**2 and x[1].free_link_slots_out > 0)[:free_link_slots]
+    def __relink_all_spells(self, max_link_range):
+        for spell in self.spells:
+            free_link_slots = spell.free_link_slots_in
+            # create a list of key-value pairs as tuples. key=distance, value=spell object
+            distance_spell_pairs = [(spell.distance_to_squared(x), x)
+                                    for x in self.spells if x is not spell
+                                    and x.position[0] < spell.position[0]]
+            candidates = sorted((x for x in distance_spell_pairs
+                                if x[0] < max_link_range**2 and x[1].free_link_slots_out > 0),
+                                key=lambda y: y[0])[:free_link_slots]
 
-        for distance, other_spell in candidates:
-            spell.link_input_to(other_spell)
+            for distance, other_spell in candidates:
+                spell.link_input_to(other_spell)
 
-    def __handle_floating_spell_links_out(self, spell, max_link_range):
-        free_link_slots = spell.free_link_slots_out
-        # create a list of key-value pairs as tuples. key=distance, value=spell object
-        distance_spell_pairs = ((spell.distance_to_squared(x), x)
-                                for x in self.spells if x is not spell
-                                and x.position[0] > spell.position[0])
-        candidates = sorted(x for x in distance_spell_pairs
-                            if x[0] < max_link_range**2 and x[1].free_link_slots_in > 0)[:free_link_slots]
-
-        for distance, other_spell in candidates:
-            spell.link_output_to(other_spell)
+    @staticmethod
+    def __notify_remove_dead_spells():
+        evt = pygame.event.Event(Event.REMOVEDEADSPELLS)
+        pygame.event.post(evt)
 
     @staticmethod
     def __spells_are_colliding(spell, other_spell):

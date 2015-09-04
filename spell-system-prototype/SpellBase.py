@@ -3,34 +3,22 @@ __author__ = 'thecomet'
 from DraggableCircle import DraggableCircle
 from SpellLabel import SpellLabel
 import pygame
+import Event
 
 
 class SpellBase(DraggableCircle):
-
-    class Listener(DraggableCircle.Listener):
-        def on_draggable_circle_clicked(self, draggable_circle):
-            self.on_spell_clicked(draggable_circle)
-
-        def on_draggable_circle_released(self, draggable_circle):
-            self.on_spell_released(draggable_circle)
-
-        def on_spell_clicked(self, spell):
-            pass
-
-        def on_spell_released(self, spell):
-            pass
 
     def __init__(self, name, color, position):
         super(SpellBase, self).__init__(color, position, 20)
         self.__name = name
         self.label = SpellLabel(self, name)
         self.is_template = False
-        self._links_in = list()
-        self._links_out = list()
+        self.links_in = list()
+        self.links_out = list()
 
     def calculate_total_energy_requirement(self):
         energy = self.calculate_local_energy_requirement()
-        for link in self._links_in:
+        for link in self.links_in:
             energy += link.calculate_total_energy_requirement()
         return energy
 
@@ -42,6 +30,11 @@ class SpellBase(DraggableCircle):
     def process_event(self, event):
         super(SpellBase, self).process_event(event)
 
+        if event.type == Event.DRAGGABLECIRCLECLICKED and event.draggable_circle is self:
+            self.__notify_spell_clicked()
+        if event.type == Event.DRAGGABLECIRCLERELEASED and event.draggable_circle is self:
+            self.__notify_spell_released()
+
     def update(self, time_step):
         super(SpellBase, self).update(time_step)
         self.__keep_spell_on_screen()
@@ -52,66 +45,85 @@ class SpellBase(DraggableCircle):
         self.label.draw(surface)
 
     def __draw_spell_links(self, surface):
-        for spell in self._links_out:
+        for spell in self.links_out:
             pygame.draw.line(surface, self.color, self.position, spell.position)
 
     def link_input_to(self, other_spell):
+        if not self.is_linkable or not other_spell.is_linkable:
+            raise RuntimeError("Spells can't link!")
         if self.free_link_slots_in == 0 or other_spell.free_link_slots_out == 0:
             raise RuntimeError("Spells don't have any free link slots")
-        self._links_in.append(other_spell)
-        other_spell._links_out.append(self)
+        self.links_in.append(other_spell)
+        other_spell.links_out.append(self)
 
     def link_output_to(self, other_spell):
+        if not self.is_linkable or not other_spell.is_linkable:
+            raise RuntimeError("Spells can't link!")
         if self.free_link_slots_out == 0 or other_spell.free_link_slots_in == 0:
             raise RuntimeError("Spells don't have any free link slots")
-        self._links_out.append(other_spell)
-        other_spell._links_in.append(self)
+        self.links_out.append(other_spell)
+        other_spell.links_in.append(self)
 
     def unlink_local(self):
-        for linked in self._links_out:
-            linked._links_in.remove(self)
+        for linked in self.links_out:
+            linked.links_in.remove(self)
 
-        for linked in self._links_in:
-            linked._links_out.remove(self)
+        for linked in self.links_in:
+            linked.links_out.remove(self)
 
-        self._links_out = list()
-        self._links_in = list()
+        self.links_out = list()
+        self.links_in = list()
 
     def unlink_chain(self):
-        for linked in self._links_out:
-            linked.unlink_chain()
-        self._links_out = list()
+        self.unlink_chain_out()
+        self.unlink_chain_in()
 
-        for linked in self._links_in:
+    def unlink_chain_out(self):
+        for linked in self.links_out:
+            linked.unlink_chain_out()
+        self.links_out = list()
+
+    def unlink_chain_in(self):
+        for linked in self.links_in:
             linked.unlink_chain()
-        self._links_in = list()
+        self.links_in = list()
 
     def is_linked_to(self, other_spell):
-        return self.is_linked_to_outwards(other_spell) or self.is_linked_to_inwards(other_spell)
+        return other_spell in self.outward_spells or other_spell in self.inward_spells
 
-    def is_linked_to_outwards(self, other_spell):
-        if self is other_spell:
-            return True
-        for linked in self._links_out:
-            if linked.is_linked_to_outwards(other_spell):
-                return True
-        return False
+    @property
+    def is_linkable(self):
+        return not self.is_template
 
-    def is_linked_to_inwards(self, other_spell):
-        if self is other_spell:
-            return True
-        for linked in self._links_in:
-            if linked.is_linked_to_inwards(other_spell):
-                return True
-        return False
+    @property
+    def outward_spells(self):
+        spells = list()
+        self.get_outward_spells(spells)
+        return spells
+
+    @property
+    def inward_spells(self):
+        spells = list()
+        self.get_inward_spells(spells)
+        return spells
+
+    def get_outward_spells(self, spells):
+        spells.append(self)
+        for linked in self.links_out:
+            linked.get_outward_spells(spells)
+
+    def get_inward_spells(self, spells):
+        spells.append(self)
+        for linked in self.links_in:
+            linked.get_inward_spells(spells)
 
     @property
     def free_link_slots_in(self):
-        return self.total_links_in - len(self._links_in)
+        return self.total_links_in - len(self.links_in)
 
     @property
     def free_link_slots_out(self):
-        return self.total_links_out - len(self._links_out)
+        return self.total_links_out - len(self.links_out)
 
     @property
     def name(self):
@@ -127,6 +139,14 @@ class SpellBase(DraggableCircle):
         width, height = info.current_w, info.current_h
         self.position = (min(max(self.position[0], self.radius), width - self.radius),
                          min(max(self.position[1], self.radius), height - self.radius))
+
+    def __notify_spell_clicked(self):
+        evt = pygame.event.Event(Event.SPELLCLICKED, spell=self)
+        pygame.event.post(evt)
+
+    def __notify_spell_released(self):
+        evt = pygame.event.Event(Event.SPELLRELEASED, spell=self)
+        pygame.event.post(evt)
 
     ####################################################################################################################
     # Interface for derived spells

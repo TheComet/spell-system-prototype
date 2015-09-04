@@ -2,27 +2,20 @@ __author__ = 'thecomet'
 
 import pygame
 from Updateable import Updateable
+import Event
 
 
 class DraggableCircle(Updateable):
 
-    class Listener(object):
-        def on_draggable_circle_clicked(self, draggable_circle):
-            pass
-
-        def on_draggable_circle_released(self, draggable_circle):
-            pass
-
     def __init__(self, color, position, radius):
         self.color = color
         self.position = position
-        self.listeners = list()
 
         self.__radius = radius
         self.__actual_radius = radius
         self.__is_draggable = True
         self.__is_dragging = False
-        self.__cursor_grab_offset = None
+        self.__cursor_grab_offset = (0, 0)
 
     def process_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -82,9 +75,9 @@ class DraggableCircle(Updateable):
             self.__is_dragging = enable
 
     def __notify_clicked(self):
-        for item in self.listeners:
-            item.on_draggable_circle_clicked(self)
+        evt = pygame.event.Event(Event.DRAGGABLECIRCLECLICKED, draggable_circle=self)
+        pygame.event.post(evt)
 
     def __notify_released(self):
-        for item in self.listeners:
-            item.on_draggable_circle_released(self)
+        evt = pygame.event.Event(Event.DRAGGABLECIRCLERELEASED, draggable_circle=self)
+        pygame.event.post(evt)
