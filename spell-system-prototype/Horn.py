@@ -3,6 +3,7 @@ __author__ = 'thecomet'
 from SpellBase import SpellBase
 from SpellLabel import SpellLabel
 import pygame
+import Utils
 
 
 class Horn(SpellBase):
@@ -13,7 +14,7 @@ class Horn(SpellBase):
         self.is_draggable = False
 
         self.__num_supported_links = 2
-        self.__power_label = SpellLabel(self, '0W', (-230, 0))
+        self.__power_label = SpellLabel(self, '0 W', (-20, 0))
         self.update_power()
 
     def draw(self, surface):
@@ -37,7 +38,7 @@ class Horn(SpellBase):
 
     def update_power(self):
         power = self.calculate_total_power_requirement()
-        self.__power_label.text = '{0:.1f} W'.format(power)
+        self.__power_label.text = Utils.metric_scale(power, 'W', decimal_places=1)
 
     @property
     def total_links_in(self):
